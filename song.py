@@ -180,8 +180,6 @@ ChordImageCache = {}
 
 ChordTranslate = {
     "Gbm": "F#m",
-    "B": "H",
-    "Bm": "Hm",
 }
 
 for k, v in ChordTranslate.items():
@@ -198,7 +196,12 @@ class Chord(PyChord):
         ret = super().__str__()
         # extrní libka používá pro některé akordy cizí zápis a my je chceme 
         #   v nám známém českém
-        return ChordTranslate.get(ret, ret)
+        if ret in ChordTranslate:
+            return ChordTranslate[ret]
+        elif ret[0] == "B":
+            return "H" + ret[1:]
+        return ret
+
 
     @property 
     def has_svg(self):

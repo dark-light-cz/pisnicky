@@ -1,0 +1,232 @@
+<html>
+  <head>
+    <style>
+        .song-body span {
+            padding:0;
+            margin:0;
+        }
+        .song-body span.space {
+            display: inline-block;
+            padding:0;
+            margin:0;
+        }
+        .song-wrap {
+            page-break-after: always;
+        }
+        /* 2 sloupcový layout se nedá tisknou z Apple Safari - použij chrome */
+        .song-body {
+            font-family: 'Courier New', monospace;
+            column-count: 2;
+        }
+        .song-body p {
+            break-inside: avoid-column;
+        }
+        @media print {
+            .song-footer{
+                display: none;
+            }
+        }
+
+        .chords-line svg {
+            vertical-align:text-top;
+        }
+    
+        .song-header div.name {
+            font-size: 200%;
+        }
+        
+        .song-header div.authors {
+            font-size: 180%;
+        }
+        .song-header div.authors:before {
+            content: "(";
+        }
+        .song-header div.authors:after {
+            content: ")";
+        }
+        .song-header div.rythm:before {
+            content: "Rytmus: ";
+        }
+        .song-header div.capo:before {
+            content: "Capo: ";
+        }
+
+        .chord {
+            font-weight: bold;
+        }
+        
+        .right {
+            float: right;
+        }
+        .left {
+            float: left;
+        }
+        .clearfix::after {
+          content: "";
+          clear: both;
+          display: table;
+        }
+        
+        ul li {
+            border-bottom: 2px dotted #ccc;
+            list-style-type: none;
+        }
+        .toc {
+            width: 90%;
+            padidng-left:5%;
+            page-break-after: always;
+        }
+        .toc .toc-authors-songname {
+            position: absolute;
+            left: 40%
+        }
+        .toc .toc-page {
+            position: relative;
+            float: right;
+        }
+        .toc .toc-left {
+            position: relative;
+            float: left;
+        }
+    </style>
+  </head>
+  <body>
+    {% set toc_a = [] %}
+    {% set toc_n = [] %}
+    {% for song in songs %}
+      {% if song.authors%}
+          {% set auths = song.authors.split(",") %}
+      {% else %}
+          {% set auths = [] %}
+      {% endif %}
+      {% set l_idx = loop.index %}
+      {% for a in auths if a.strip() %}
+        {% set t_a = [] %}
+        {% for ta in auths if ta.strip() and a != ta %}
+            {% set tmp = t_a.append(ta)%}
+        {% endfor %}
+        {% set tmp = toc_a.append([
+            a.strip(),
+            ", ".join(t_a),
+            song.name,
+            l_idx
+        ]) %}
+      {% endfor %}
+      {% set tmp = toc_n.append([song.name, song.authors, loop.index]) %}
+
+      <div class="song-wrap clearfix" id="song{{l_idx}}">
+        <div class="song-header clearfix">
+            <div class="left">
+                {% for k in ["name", "authors",] %}
+                    {% if song[k] %}
+                        <div class="{{k}}">{{song[k]}}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="right">
+                <div class="page_nr">Číslo:{{("% 4d"%loop.index)|replace(" ", '&nbsp;')}}</div>
+                {% for k in ["capo", "rythm"] %}
+                    {% if song[k] %}
+                        
+                        {% if k in ["rythm"] and "/" in song[k] %}
+                            <div class="{{k}} fraction">
+                                <sup>{{song[k].split("/",1)[0]}}</sup>/<sub>{{song[k].split("/",1)[1]}}</sup>
+                            </div>
+                        {% else %}
+                            <div class="{{k}}">{{song[k]}}</div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <hr>
+        <pre class="song-body">{{song.text}}</pre>
+        <div class="song-body">
+          {%- for paragraph in song -%}
+            <p class="{{paragraph.kind}}">
+              {%- if paragraph.kind == 'chorus' -%}
+                <b>Ref{{":" if paragraph else "."}}</b><br/>
+              {%- elif paragraph.kind == 'verse' and paragraph.pos -%}
+                <b>{{paragraph.pos}}:</b><br/>
+              {%- endif -%}
+              {%- for songline in paragraph -%}
+                {%- if songline.mixline -%}
+                    {%- for songpart in songline -%}
+                        {%- if songpart.chord -%}
+                            <span class="chord">{{- songpart.chord -}}</span>
+                        {%- endif -%}
+                        {%- if songpart.after_chord_space -%}
+                            <span class="space" style="width:{{songpart.after_chord_space}}ch"></span>
+                        {%- endif -%}
+                    {%- endfor -%}
+                    <br>
+                    {%- for songpart in songline -%}
+                      {%- if songpart.text -%}
+                        <span class="songtext">{{- songpart.text.replace(' ', '&nbsp;') -}}</span>
+                      {%- endif -%}
+                      {%- if songpart.after_text_space -%}
+                          <span class="space" style="width:{{songpart.after_text_space}}ch"></span>
+                      {%- endif -%}
+                    {%- endfor -%}
+                {%- else -%}
+                    {%- for songpart in songline -%}
+                      {%- if songpart.chord -%}
+                        <span class="chord">{{- songpart.chord -}}</span>
+                        {%- if songpart.after_chord_space -%}
+                            <span class="space" style="width:{{songpart.after_chord_space}}ch"></span>
+                        {%- endif -%}
+                      {%- elif songpart.text -%}
+                        <span class="songtext">{{- songpart.text.replace(' ', '&nbsp;') -}}</span>
+                        {%- if songpart.after_text_space -%}
+                            <span class="space" style="width:{{songpart.after_text_space}}ch"></span>
+                        {%- endif -%}
+                      {%- elif songpart.spaces -%}
+                        <span class="space" style="width:{{songpart.spaces}}ch"></span>
+                      {%- endif -%}
+                    {%- endfor -%}
+                {%- endif -%}
+                <br>
+              {%- endfor -%}
+            </p>
+          {%- endfor -%}
+        </div>
+        <div class="chords-line">
+            <hr>
+            {% if song.used_chords %}
+                {%- for chord in song.used_chords if chord.has_svg -%}
+                    {{chord}}:{{ chord.svg(width=87) }}
+                {%- endfor -%}
+            {%- endif -%}
+        </div>
+        <div class="song-footer">
+            <hr>
+            <hr>
+        </div>
+      </div>
+    {%- endfor -%}
+    {%- if print_toc -%}
+        <h2>Autoři:</h2>
+        <ul class="toc">
+        {% for row in toc_a|sort %}
+            <li class="clearfix">
+            <span class="toc-authors-songname">{{row[2]}}</span>
+            <span class="toc-left">{{row.0}}{%if row[1]%}, {{row[1]}}{%endif%}</span>
+            <a class="toc-page" href='#song{{row[3]}}'>{{row[3]}}</a>
+            </li>
+        {% endfor %}
+        </ul>
+        <div class="song-footer"></div>
+        <h2>Písně:</h2>
+        <ul class="toc">
+        {% for row in toc_n|sort %}
+            <li class="clearfix">
+            <span class="toc-authors-songname">{{row[1]}}</span>
+            <span class="toc-left">{{row.0}}</span>
+            <a class="toc-page" href='#song{{row[2]}}'>{{row[2]}}</a>
+            </li>
+        {% endfor %}
+        </ul>
+        <div class="song-footer"></div>
+    {%- endif -%}
+  </body>
+</html>

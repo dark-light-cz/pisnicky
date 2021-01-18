@@ -9,6 +9,7 @@
 Zde dojde k chybě v zobrazení akordu [Asus4 A] kdy vypadá takhle
 
 `A----------------D-----Asus4 A-------------F#mi--Fmi---Emi--`
+
 `Byly krásný naše plány  byla jsi můj celej svět ++++++++++++`
 * Rozpoznání refrénové značky u písní s mezerami - pokud začínají všechny sloky mezerami jako např u https://supermusic.cz/skupina.php?action=piesen&idpiesne=1089 nedojde k rozpoznání Refrénové značky :-/
 * je potřeba udělat multiakord podle toho co to je začít to zpracovávat

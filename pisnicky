@@ -1,0 +1,121 @@
+#! /usr/bin/python3
+import argparse
+import sys
+
+from songbook import SongBook
+from console import Console
+
+if __name__== "__main__":
+    parser = argparse.ArgumentParser(
+        description='Konzolový tool pro práci s zpěvníkem'
+    )
+    parser.add_argument(
+        'operation',
+        choices=[
+            'list', 'add', "delete", "print", "import", "show", "transpose"
+        ],
+        default="list",
+        help='Operace k vykonání'
+    )
+    parser.add_argument(
+        '--importFormat', metavar='f',
+        choices=['hovorka', 'supermusic'],
+        default='hovorka',
+        help='\n'.join((
+            'Formát vstupu:',
+            '\t hovorka: Export z aplikace Zpěvník/Zpěvník+ od Karel Hovorka',
+        ))
+    )
+    parser.add_argument(
+        '--importFile', metavar="i",
+        type=open,
+        required=False,
+        help='Cesta k importovanému souboru',
+    )
+    parser.add_argument(
+        '--importSongId', metavar="j",
+        type=int,
+        required=False,
+        help='Id písně z linku v prohlížeči (pro import supermusic)',
+    )
+    parser.add_argument(
+        '--db', metavar='d',
+        type=str, nargs=1,
+        default="./songs.sqlite3",
+        help='databáze s písničkami'
+    )
+    parser.add_argument(
+        '--song', metavar='s',
+        type=int, nargs='+',
+        required=False,
+        help='Id písně/písní'
+    )
+    parser.add_argument(
+        '--transpose', metavar='t',
+        type=int, nargs=1,
+        required=False,
+        help='o kolik transponovat (lze i záporné číslo)'
+    )
+    args = parser.parse_args()
+    songbook = SongBook(args.db)
+    console = Console(songbook) 
+    if args.operation == 'list':
+        console.list_songs()
+    elif args.operation == 'add':
+        console.add_song()
+    elif args.operation == 'transpose':
+        if not args.transpose:
+            print(
+                "Transpozice potřebuje počet o kolik transponovat"
+            )
+            sys.exit(-1)
+        if not args.song:
+            print(
+                "Transpozice potřebuje id písně - seznam získáš pomocí "
+                "příkazu list"
+            )
+            sys.exit(-1)
+        console.transpose_song(args.song, args.transpose[0])
+    elif args.operation == 'delete':
+        if not args.song:
+            print(
+                "Delete potřebuje id písně - seznam získáš pomocí "
+                "příkazu list"
+            )
+            sys.exit(-1)
+        console.delete_song(args.song)
+    elif args.operation == 'show':
+        if not args.song:
+            print(
+                "Show potřebuje id písně - seznam získáš pomocí "
+                "příkazu list"
+            )
+            sys.exit(-1)
+        console.show_song(args.song)
+    elif args.operation == "print":
+        if not args.song:
+            print("Opravdu vytisknout celou knihovnu?[a/n]")
+            while True:
+                line = input().lower().strip()
+                if line == 'n':
+                    sys.exit(-1)
+                if line in ("ay"):
+                    break
+        # endif
+        console.print_song(args.song, template="./template.jinja")
+    elif args.operation == "import":
+        if args.importFormat == 'hovorka':
+            if not args.importFile:
+                print("Zadej vstupní soubor k importu")
+                sys.exit(-1)
+            console.import_hovorka(args.importFile)
+        elif args.importFormat == 'supermusic':
+            if not args.importSongId:
+                print("Zadej importSongId - id písně")
+                sys.exit(-1)
+            console.import_supermusic(args.importSongId)
+    else:
+        raise NotImplementedError()
+    # endif
+
+

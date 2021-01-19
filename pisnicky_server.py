@@ -6,6 +6,9 @@ from songbook import SongBook, Song
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 from time import sleep
+from jinja2 import Environment, FileSystemLoader
+from jinja2.environment import TemplateStream
+import types
 
 PORT = 8000
 
@@ -15,6 +18,12 @@ song_cols = (
     "name", "authors", "text", "rythm", "capo", "bpm", "source", "extid",
     "transpose"
 )
+
+def render(template, data):
+    env = Environment(loader=FileSystemLoader('./template'))
+    tpl = env.get_template(template)
+    return tpl.stream(**data)
+
 
 class PisnickyHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
@@ -74,27 +83,10 @@ class PisnickyHandler(http.server.BaseHTTPRequestHandler):
                 song_id = [int(query_components["id"][0])]
             out = s.render(song_id, toc=not bool(song_id))
         elif req.path == "/":
-            out = open("index.html", "rb").read()
+            out = render("list.jinja", {})
         elif req.path == "/list":
             s = SongBook("./songs.sqlite3")
-            out="""
-            <html>
-                <head>
-                </head>
-                <body>
-                    <h1>Seznam písní</h1>
-                    <ul>"""
-            for song in s.list_songs():
-                out += f'''<li>
-                    {song["name"]}
-                    <a href="/print?id={song["song_id"]}">Tisk</a>
-                    <a href="/edit?id={song["song_id"]}">Upravit</a>
-                    <a href="/delete?id={song["song_id"]}" onclick='javascript:confirm("Opravdu smazat?")'>Smazat</a>
-                </li>'''
-            out += """
-                    </ul>
-                </body>
-            </html> """
+            out = render("list.jinja", {"songs": s.list_songs()})
         elif req.path == "/import/supermusic":
             query_components = parse_qs(req.query)
             song_id = int(query_components["id"][0])
@@ -117,48 +109,16 @@ class PisnickyHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Location", f"/list")
             self.end_headers()
             return
-        elif req.path == "/edit" or req.path == "/new":
-            if req.path == '/new':
-                song = Song()
-            else:
-                query_components = parse_qs(req.query)
-                song_id = [int(query_components["id"][0])]
-                s = SongBook("./songs.sqlite3")
-                song = Song(**(list(s.get_song(song_id))[0]))
-            # endif
-            out=f"""
-            <html>
-                <head>
-                    <style>
-                        body {{
-                            font-size: 18px;
-                        }}
-                        textarea,
-                        input {{ 
-                            font-size: 18px; font-family: monospace; 
-                        }}
-                    </style>
-                </head>
-                <body>
-                    <h1>Edit písně</h1>
-                    <a href="/">Domů</a><br/>
-                    <form method="POST">
-                        <label for="id">ID:</label> <input id="id" name="id" value="{song.song_id}" readonly><br>
-                        <label for="name">Jméno:</label> <input id="name" name="name" value="{song.name}"><br>
-                        <label for="authors">Autoři:</label> <input id="authors" name="authors" value="{song.authors}"><br>
-                        <label for="capo">Capo:</label> <input id="capo" name="capo" value="{song.capo}" type="number" min='0' max='10'><br>
-                        <label for="bpm">tempo:</label> <input id="bpm" name="bpm" value="{song.bpm}" type="number"><br>
-                        <label for="transpose">Zobrazit transponované o:</label> <input id="transpose" name="transpose" value="{song.transpose}" type="number" min='-10' max='10'><br>
-                        <label for="source">Zdroj:</label> <input id="source" name="source" value="{song.source}" readonly><br>
-                        <label for="extid">Externí id:</label> <input id="extid" name="extid" value="{song.extid}" readonly><br>
-                        <textarea name="text" style="width:100%;height:500px">{song.text}</textarea><br>
-                        <input type="submit" value="Uložit" name="submit"><br>
-                    </form>
-                    <pre>{song.normalize_text()}</pre><br>
-                    <iframe src="/print?id={song.song_id}" style="width:100%;height:750px"></iframe>
-                </body>
-            </html> """
-
+        elif req.path == "/new":
+            song = Song()
+            out = render("new.jinja", {"song": song})
+        elif req.path == "/edit":
+            query_components = parse_qs(req.query)
+            song_id = [int(query_components["id"][0])]
+            s = SongBook("./songs.sqlite3")
+            song = Song(**(list(s.get_song(song_id))[0]))
+            out = render("edit.jinja", {"song": song})
+        
         if not out:
             self.send_response(404)
             self.send_header("Content-type", "text/plain")
@@ -170,24 +130,36 @@ class PisnickyHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
 
         # Setting the header
-        self.send_header("Content-type", "text/html")
+        self.send_header("Content-type", "text/html; charset=UTF-8")
 
         # Whenever using 'send_header', you also have to call 'end_headers'
         self.end_headers()
 
-        self.wfile.write(
-            out 
-            if isinstance(out, bytes)
-            else bytes(out, "utf8")
-        )
+        if isinstance(out, (types.GeneratorType, TemplateStream)):
+            for buff in out:
+                self.wfile.write(
+                    buff 
+                    if isinstance(buff, bytes)
+                    else bytes(buff, "utf8")
+                )
+        else:
+            self.wfile.write(
+                out 
+                if isinstance(out, bytes)
+                else bytes(out, "utf8")
+            )
 
         return
 
+socketserver.TCPServer.allow_reuse_address = True
 while True:
     try:
         with socketserver.TCPServer(("", PORT), PisnickyHandler) as httpd:
             print(f"Started server at localhost:{PORT}")
             httpd.serve_forever()
+    except KeyboardInterrupt as e:
+        httpd.shutdown()
+        break;
     except OSError as e:
         if e.errno == 48:
             print("Port je obsazen - čekám na uvolnění")

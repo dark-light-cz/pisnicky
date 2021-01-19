@@ -1,6 +1,7 @@
 from chord_images import KnownChords
 from pychord import Chord as PyChord
 import re
+import traceback
 from copy import deepcopy
 
 # TODO
@@ -100,6 +101,7 @@ class Song(list):
                         chord=" " + part + " ", transpose=self.transpose
                     ))
                 except:
+                    traceback.print_exc()
                     print(f"Neznámý akord : {part}")
                     songparts.append(Block(text="[" + part + "]"))
                 else:
@@ -198,7 +200,7 @@ class Chord(PyChord):
         #   v nám známém českém
         if ret in ChordTranslate:
             return ChordTranslate[ret]
-        elif ret[0] == "B":
+        elif ret[0] == "B" and (len(ret)<2 or ret[1] != 'b'):
             return "H" + ret[1:]
         return ret
 
@@ -284,6 +286,7 @@ class Line(list):
                     prev_len = (
                         len(str(prev.chord)) + prev.chord_spaces + prev.spaces
                     )
+                    this.origchord = prev.origchord
                     this.chord = prev.chord
                     this.chord_spaces = prev.chord_spaces
                     if prev_len > this_len:
@@ -310,6 +313,7 @@ class Block:
     def __init__(self, text=None, chord=None, transpose=0):
         self.chord = None
         self.chord_spaces = 0
+        self.origchord = None
         if chord:
             origchord = chord
             initial_chord_len = len(chord) 
@@ -334,6 +338,7 @@ class Block:
             if isinstance(chord, list):
                 print("!"*20, "Chyba zpracování multi-akordu ", origchord)
                 chord=chord[0]
+                self.origchord = origchord
             chord = chord[0].upper() + chord[1:]
             # pychord neumí pracovat s H ale anglicky B
             if chord.startswith("H"):
@@ -347,7 +352,6 @@ class Block:
                 chord = chord[:-4] + "maj7"
             elif chord.endswith("4sus"):
                 chord = chord[:-4] + "sus4"
-            print("!"*30, repr(chord))
             self.chord = Chord(chord)
             if transpose:
                 self.chord.transpose(transpose)
@@ -405,6 +409,18 @@ class Block:
 
     def __repr__(self):
         return f'Block(text:"{self.text}",chord:"{self.chord}", space:{self.spaces}, chordSpace:{self.chord_spaces})'  # noqa
+    
+    @property
+    def after_origchord_space(self):
+        if not self.origchord:
+            raise RuntimeError(
+                "Cant' use origchord space without origchord set")
+        if not self.text:
+            return 0
+        else:
+            ocl = len(self.origchord)
+            text_len = len(self.text) + self.spaces
+            max(text_len - ocl, 0)
 
     @property
     def after_chord_space(self):

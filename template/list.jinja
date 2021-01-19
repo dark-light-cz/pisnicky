@@ -1,0 +1,13 @@
+{% extends 'layout.jinja' %}
+{% block main%}
+<ul>
+{% for song in songs %}
+    <li>
+        {{song["name"]}}
+        <a href="/print?id={{song.song_id}}">Tisk</a>
+        <a href="/edit?id={{song.song_id}}">Upravit</a>
+        <a href="/delete?id={{song.song_id}}" onclick='javascript:confirm("Opravdu smazat?")'>Smazat</a>
+    </li>
+{% endfor %}
+</ul>
+{% endblock %}

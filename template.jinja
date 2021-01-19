@@ -152,11 +152,16 @@
               {%- for songline in paragraph -%}
                 {%- if songline.mixline -%}
                     {%- for songpart in songline -%}
-                        {%- if songpart.chord -%}
-                            <span class="chord">{{- songpart.chord -}}</span>
-                        {%- endif -%}
-                        {%- if songpart.after_chord_space -%}
-                            <span class="space" style="width:{{songpart.after_chord_space}}ch"></span>
+                        {%- if songpart.origchord -%}
+                            <span class="chord">{{- songpart.origchord.replace(" ", '&nbsp;') -}}</span>
+                            <span class="space" style="width:{{songpart.after_origchord_space}}ch"></span>
+                        {% else %}
+                            {%- if songpart.chord -%}
+                                <span class="chord">{{- songpart.chord -}}</span>
+                            {%- endif -%}
+                            {%- if songpart.after_chord_space -%}
+                                <span class="space" style="width:{{songpart.after_chord_space}}ch"></span>
+                            {%- endif -%}
                         {%- endif -%}
                     {%- endfor -%}
                     <br>
@@ -170,7 +175,10 @@
                     {%- endfor -%}
                 {%- else -%}
                     {%- for songpart in songline -%}
-                      {%- if songpart.chord -%}
+                      {%- if songpart.origchord -%}
+                        <span class="chord">{{- songpart.origchord.replace(" ", '&nbsp;') -}}</span>
+                        <span class="space" style="width:{{songpart.after_origchord_space}}ch"></span>
+                      {%- elif songpart.chord -%}
                         <span class="chord">{{- songpart.chord -}}</span>
                         {%- if songpart.after_chord_space -%}
                             <span class="space" style="width:{{songpart.after_chord_space}}ch"></span>

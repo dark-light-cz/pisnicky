@@ -15,6 +15,9 @@ Byly krásný naše plány  byla jsi můj celej svět ++++++++++++
 
 
 class Song(list):
+    @property
+    def width(self):
+        return max(i.width for i in self)
 
     def __init__(
         self, 
@@ -203,8 +206,7 @@ class Chord(PyChord):
         elif ret[0] == "B" and (len(ret)<2 or ret[1] != 'b'):
             return "H" + ret[1:]
         return ret
-
-
+    
     @property 
     def has_svg(self):
         if str(self) not in KnownChords:
@@ -252,6 +254,10 @@ class Chord(PyChord):
 
 
 class Line(list):
+    @property
+    def len(self):
+        return sum(len(i) for i in self)
+        
     @property
     def chordline(self):
         return any(i.chord for i in self)
@@ -309,6 +315,12 @@ class Line(list):
 class Block:
     _chorus_starts = ["Ref.", "Ref:", "®:"]
     _verse_starts = re.compile(r'^(\d+)[.:]?\)?')
+
+    def __len__(self):
+        return max(
+            len(self.text or "") + self.spaces,
+            len(str(self.chord or "")) + self.chord_spaces
+        )
 
     def __init__(self, text=None, chord=None, transpose=0):
         self.chord = None
@@ -474,19 +486,30 @@ class Block:
         if not self.text:
             return len(self.chord)
         return max(len(self.chord) - len(self.text), 0)
-        """
-class Paragraph(list):
+    """
+
+
+class SongBlock(list):
+    kind = ""
+    @property
+    def width(self):
+        if not self:
+            return 0
+        return max(i.len for i in self)
+
+
+class Paragraph(SongBlock):
     kind = "paragraph"
 
 
-class Verse(list):
+class Verse(SongBlock):
     kind = "verse"
     pos = None
 
 
-class Chorus(list):
+class Chorus(SongBlock):
     kind = "chorus"
 
 
-class Recital(list):
+class Recital(SongBlock):
     kind = "recital"

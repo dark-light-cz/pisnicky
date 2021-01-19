@@ -16,6 +16,8 @@
         /* 2 sloupcový layout se nedá tisknou z Apple Safari - použij chrome */
         .song-body {
             font-family: 'Courier New', monospace;
+        }
+        .song-body-2col {
             column-count: 2;
         }
         .song-body p {
@@ -140,8 +142,9 @@
             </div>
         </div>
         <hr>
-        <pre class="song-body">{{song.text}}</pre>
-        <div class="song-body">
+        {# <pre class="song-body">{{song.text}}</pre> #}
+
+        <div class="song-body {% if song.width <= 40 %}song-body-2col{% endif %}" >
           {%- for paragraph in song -%}
             <p class="{{paragraph.kind}}">
               {%- if paragraph.kind == 'chorus' -%}

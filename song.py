@@ -313,7 +313,7 @@ class Line(list):
             
 
 class Block:
-    _chorus_starts = ["Ref.", "Ref:", "®:"]
+    _chorus_starts = re.compile(r'^(R(ef)?((\.?:)|(\.)))|(®:?)')
     _verse_starts = re.compile(r'^(\d+)[.:]?\)?')
 
     def __len__(self):
@@ -382,23 +382,23 @@ class Block:
     def is_chorus_start(self):
         # TODO nerozpoznává se vícenásobný refrén
         #   např "2 x R:" (supermusic 1089)
-
-        return (
-            self.text and 
-            any(self.text.startswith(s) for s in self._chorus_starts)
-        )
+        
+        return self.text and self._chorus_starts.match(self.text)
 
     def strip_chorus_start(self):
         if not self.is_chorus_start:
             raise RuntimeError(
                 "Nemůžeš odstraňovat refrénovou zančku z něčeho kde není"
             )
-        for s in self._chorus_starts:
-            if self.text.startswith(s):
-                self.text = self.text[len(s):]
-                if self.text and self.text[0] == " ":
-                    self.text = self.text[1:]
-                return
+        match = self.text and self._chorus_starts.match(self.text)
+        if not match:
+            raise RuntimeError(
+                "Nemůžeš odstraňovat číslo sloky kde není"
+            )
+        grp = match.group(0)
+        self.text = self.text[len(grp):]
+        if self.text and self.text[0] == " ":
+            self.text = self.text[1:]
     # endef strip_chorus_start
     
     @property

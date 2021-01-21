@@ -118,6 +118,8 @@ class SongBook:
             "extid", "transpose"
         ):
             if k in kwargs:
+                if kwargs[k] == 'None':
+                    kwargs[k] = None
                 cols[k] = kwargs[k]
         
         qry = "update songs set " + ", ".join(

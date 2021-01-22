@@ -193,7 +193,7 @@
           {%- for paragraph in song -%}
             <p class="{{paragraph.kind}}">
               {%- if paragraph.kind == 'chorus' -%}
-                <b>Ref{{":" if paragraph else "."}}</b><br/>
+                <b>Ref{{("-" + paragraph.pos|string) if paragraph.pos else ""}}{{":" if paragraph else "."}}</b><br/>
               {%- elif paragraph.kind == 'verse' and paragraph.pos -%}
                 <b>{{paragraph.pos}}:</b><br/>
               {%- endif -%}

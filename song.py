@@ -178,7 +178,7 @@ class Song(list):
                 # začátek refrénu vždy dá blok refrénu
                 self.add(actBlock)
                 actBlock = Chorus()
-                songline[0].strip_chorus_start()
+                actBlock.pos = songline[0].strip_chorus_start()
                 if not songline[0].text and not songline[0].chord:
                     if len(songline) != 1:
                         actBlock.append(songline)
@@ -329,7 +329,7 @@ class Line(list):
             
 
 class Block:
-    _chorus_starts = re.compile(r'^(R(ef)?((\.?:)|(\.)))|(®:?)')
+    _chorus_starts = re.compile(r'^(R(ef)? ?(\d)?((\.?:)|(\.)))|(®:?)')
     _verse_starts = re.compile(r'^(\d+)[.:]?\)?')
 
     def __len__(self):
@@ -419,6 +419,9 @@ class Block:
         self.text = self.text[len(grp):]
         if self.text and self.text[0] == " ":
             self.text = self.text[1:]
+        ridx = match.group(3)
+        if ridx:
+            return int(ridx)
     # endef strip_chorus_start
     
     @property
@@ -529,6 +532,7 @@ class Verse(SongBlock):
 
 class Chorus(SongBlock):
     kind = "chorus"
+    pos = None
 
 
 class Recital(SongBlock):

@@ -351,19 +351,23 @@ class Block:
                 print("!"*20, "Chyba zpracování multi-akordu ", origchord)
                 chord=chord[0]
                 self.origchord = origchord
-            chord = chord[0].upper() + chord[1:]
-            # pychord neumí pracovat s H ale anglicky B
-            if chord.startswith("H"):
-                chord = "B" + chord[1:]
-            # pychord neumí pracovat s Ami ale jen s Am
-            if chord.endswith("mi"):
-                chord = chord[:-1]
-            elif chord.endswith("mi7"):
-                chord = chord[:-2] + "7"
-            elif chord.endswith("7maj"):
-                chord = chord[:-4] + "maj7"
-            elif chord.endswith("4sus"):
-                chord = chord[:-4] + "sus4"
+            chord_split = chord.split("/")
+            for idx, chordpart in enumerate(chord_split):
+                chordpart = chordpart[0].upper() + chordpart[1:]
+                # pychordpart neumí pracovat s H ale anglicky B
+                if chordpart.startswith("H"):
+                    chordpart = "B" + chordpart[1:]
+                # pychordpart neumí pracovat s Ami ale jen s Am
+                if chordpart.endswith("mi"):
+                    chordpart = chordpart[:-1]
+                elif chordpart.endswith("mi7"):
+                    chordpart = chordpart[:-2] + "7"
+                elif chordpart.endswith("7maj"):
+                    chordpart = chordpart[:-4] + "maj7"
+                elif chordpart.endswith("4sus"):
+                    chordpart = chordpart[:-4] + "sus4"
+                chord_split[idx] = chordpart
+            chord = "/".join(chord_split)
             self.chord = Chord(chord)
             if transpose:
                 self.chord.transpose(transpose)

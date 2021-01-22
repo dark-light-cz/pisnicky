@@ -14,6 +14,6 @@
     <textarea name="text" style="width:100%;height:500px">{{song.text}}</textarea><br>
     <input type="submit" value="Uložit" name="submit"><br>
 </form>
-<pre>{{song.normalize_text()}}</pre><br>
+{#<pre>{{song.normalize_text()}}</pre><br>#}
 <iframe src="/print?id={{song.song_id}}" style="width:100%;height:750px"></iframe>
 {% endblock %}

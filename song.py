@@ -19,6 +19,22 @@ class Song(list):
     def width(self):
         return max(i.width for i in self)
 
+    @property
+    def lines(self):
+        i = 0
+        for paragraph in self:
+            i += 1
+            if paragraph.kind == "chorus":
+                i += 1
+            elif paragraph.kind == "verse" and paragraph.pos:
+                i += 1
+            for line in paragraph:
+                if line.mixline:
+                    i += 2
+                else:
+                    i += 1
+        return i
+
     def __init__(
         self, 
         song_id=None,

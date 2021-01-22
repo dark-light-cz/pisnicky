@@ -20,8 +20,42 @@
         .song-body-2col {
             column-count: 2;
         }
+        .song-body.text-small0 {
+            font-size: 100%;
+        }
+        .song-body.text-small1 {
+            font-size: 80%;
+        }
+        .song-body.text-small2 {
+            font-size: 60%;
+        }
         .song-body p {
             break-inside: avoid-column;
+        }
+        
+        .chord-img {
+            display: inline-block;
+        }
+
+        .wrap-col .song-body {
+            display: inline-block;
+            float: left;
+            width:auto%;
+        }
+        .wrap-col .chords-line {
+            display: inline-block;
+            float: right;
+            width:15%;
+            overflow:hidden;
+        }
+        .wrap-col.line1 .chords-line{
+            width:15%;
+        }
+        .wrap-col.line2 .chords-line{
+            width:30%;
+        }
+        .wrap-col.line3 .chords-line{
+            width:45%;
         }
         @media print {
             .song-footer{
@@ -143,9 +177,19 @@
             </div>
         </div>
         <hr>
+        {% set songLines = song.lines %}
         {# <pre class="song-body">{{song.text}}</pre> #}
-
-        <div class="song-body {% if song.width <= 40 %}song-body-2col{% endif %}" >
+        {% set textSmall = 0 %}
+        {% if song.width > 40 and songLines > 86 %}
+            {% set textSmall = 2 %}
+        {% elif song.width > 40 and songLines > 68 %}
+            {% set textSmall = 1 %}
+        {%endif%}
+        {%if textSmall %}
+            <div class="wrap-row clearfix">
+            <div class="wrap-col">
+        {%endif%}
+        <div class="song-body {% if song.width <= 40 %}song-body-2col{% endif %} text-small{{textSmall}} songLines{{songLines}}" >
           {%- for paragraph in song -%}
             <p class="{{paragraph.kind}}">
               {%- if paragraph.kind == 'chorus' -%}
@@ -202,14 +246,28 @@
             </p>
           {%- endfor -%}
         </div>
+        {%if textSmall %}
+            </div><!-- wrap-col-->
+            <div class="wrap-col line{{
+                1 if song.used_chords|length <= 7 else (
+                    2 if song.used_chords|length <= 14 else 3
+                )
+            }}">
+        {%endif%}
         <div class="chords-line">
-            <hr>
+            {%if not textSmall %}
+                <hr>
+            {%endif%}
             {% if song.used_chords %}
                 {%- for chord in song.used_chords if chord.has_svg -%}
-                    {{chord}}:{{ chord.svg(width=87) }}
+                    <div class="chord-img">{{chord}}:<br/>{{ chord.svg(width=87) }}</div>
                 {%- endfor -%}
             {%- endif -%}
         </div>
+        {%if textSmall %}
+            </div><!-- wrap-col-->
+            </div><!-- wrap-row-->
+        {%endif%}
         <div class="song-footer">
             <hr>
             <hr>

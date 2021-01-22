@@ -42,6 +42,8 @@ KnownChords = {
     "A5/E": Chord(positions='0011xx', fingers='--12--'),
     #"A5/E": Chord(positions='xx2255', fingers='--1133'),
     "Am": Chord(positions='002210', fingers='--321-'),
+    "Am/C": Chord(positions='x32210', fingers='-4321-'),
+    "Am/G": Chord(positions='302210', fingers='4-321-'),
     # "Am": Chord(positions='002220', fingers='--123-'),
     "Am7": Chord(positions='x02010', fingers='--2-1-'),
     "A7": Chord(positions='002020', fingers='--1-2-'),

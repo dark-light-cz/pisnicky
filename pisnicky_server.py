@@ -111,7 +111,7 @@ class PisnickyHandler(http.server.BaseHTTPRequestHandler):
             return
         elif req.path == "/new":
             song = Song()
-            out = render("new.jinja", {"song": song})
+            out = render("create.jinja", {"song": song})
         elif req.path == "/edit":
             query_components = parse_qs(req.query)
             song_id = [int(query_components["id"][0])]

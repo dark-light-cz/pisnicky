@@ -201,6 +201,8 @@ ChordImageCache = {}
 
 ChordTranslate = {
     "Gbm": "F#m",
+    # ani je to zjednobušení ;) ale to je asi cajk
+    "Ebm": "D#m",
 }
 InvChordTranslate = {
     v:k for k, v in ChordTranslate.items()
@@ -211,7 +213,55 @@ for k, v in ChordTranslate.items():
         KnownChords[v] = KnownChords[k]
 # endfor
 
-class Chord(PyChord):
+class ImageChord:
+    @property 
+    def has_svg(self):
+        if str(self) not in KnownChords:
+            print("Chybí definice prstokladu akordu", str(self))
+            return False
+        return True
+        # return str(self) in KnownChords
+
+    def svg(self, width=None, height=None):
+        c = KnownChords.get(str(self))
+        if not c:
+            print("Chybí definice prstokladu akordu", str(self))
+            return None
+        k = (str(self), width, height)
+        img = ChordImageCache.get(k)
+        if img:
+            return img
+        oldstyle = deepcopy(c.style)
+        scale = 1
+        if width and height:
+            scale = min(
+                height / c.style["drawing"]["height"],
+                width / c.style["drawing"]["width"]
+            )
+            c.style["drawing"]["height"] = width
+            c.style["drawing"]["width"] = height
+        elif width:
+            scale = width / c.style["drawing"]["width"]
+            c.style["drawing"]["height"] *= scale
+            c.style["drawing"]["width"] = width
+        elif height:
+            scale = height / c.style["drawing"]["height"]
+            c.style["drawing"]["width"] *= scale
+            c.style["drawing"]["height"] = height
+
+        c.style["drawing"]["font_size"] = 15 * scale
+        c.style["drawing"]["spacing"] = 30 * scale
+        # zvětšit nebo zmenšit kolečko ekvivalentně
+        c.style["marker"]["radius"] = (12 * scale)
+        # split odstraní hlavičku xml -> protože chci embedovat
+        ret = c.render().getvalue().split('\n', 1)[1]
+        ChordImageCache[k] = ret
+        c.style = oldstyle
+        return ret
+
+
+
+class Chord(ImageChord, PyChord):
 
     @classmethod
     def from_czech(cls, chord):
@@ -258,50 +308,9 @@ class Chord(PyChord):
             ret = "H" + ret[1:]
         return ret
     
-    @property 
-    def has_svg(self):
-        if str(self) not in KnownChords:
-            print("Chybí definice prstokladu akordu", str(self))
-            return False
-        return True
-        # return str(self) in KnownChords
 
-    def svg(self, width=None, height=None):
-        c = KnownChords.get(str(self))
-        if not c:
-            print("Chybí definice prstokladu akordu", str(self))
-            return None
-        k = (str(self), width, height)
-        img = ChordImageCache.get(k)
-        if img:
-            return img
-        oldstyle = deepcopy(c.style)
-        scale = 1
-        if width and height:
-            scale = min(
-                height / c.style["drawing"]["height"],
-                width / c.style["drawing"]["width"]
-            )
-            c.style["drawing"]["height"] = width
-            c.style["drawing"]["width"] = height
-        elif width:
-            scale = width / c.style["drawing"]["width"]
-            c.style["drawing"]["height"] *= scale
-            c.style["drawing"]["width"] = width
-        elif height:
-            scale = height / c.style["drawing"]["height"]
-            c.style["drawing"]["width"] *= scale
-            c.style["drawing"]["height"] = height
-
-        c.style["drawing"]["font_size"] = 15 * scale
-        c.style["drawing"]["spacing"] = 30 * scale
-        # zvětšit nebo zmenšit kolečko ekvivalentně
-        c.style["marker"]["radius"] = (12 * scale)
-        # split odstraní hlavičku xml -> protože chci embedovat
-        ret = c.render().getvalue().split('\n', 1)[1]
-        ChordImageCache[k] = ret
-        c.style = oldstyle
-        return ret
+class FakeChord(ImageChord, str):
+    pass
 
 
 class Line(list):
@@ -402,9 +411,16 @@ class Block:
                 print("!"*20, "Chyba zpracování multi-akordu ", origchord)
                 chord=chord[0]
                 self.origchord = origchord
-            self.chord = Chord.from_czech(chord)
-            if transpose:
-                self.chord.transpose(transpose)
+            try:
+                self.chord = Chord.from_czech(chord)
+            except ValueError as e:
+                print("Unknown chord", chord, "-" , e)
+                if transpose:
+                    raise
+                self.chord = FakeChord(chord)
+            else:
+                if transpose:
+                    self.chord.transpose(transpose)
             self.chord_spaces = initial_chord_len - len(str(self.chord))
         # endif
         if text and all(i == " " for i in text):

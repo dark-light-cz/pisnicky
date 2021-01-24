@@ -202,6 +202,9 @@ ChordImageCache = {}
 ChordTranslate = {
     "Gbm": "F#m",
 }
+InvChordTranslate = {
+    v:k for k, v in ChordTranslate.items()
+}
 
 for k, v in ChordTranslate.items():
     if k in KnownChords:
@@ -209,6 +212,34 @@ for k, v in ChordTranslate.items():
 # endfor
 
 class Chord(PyChord):
+
+    @classmethod
+    def from_czech(cls, chord):
+        chord_split = chord.split("/")
+        for idx, chordpart in enumerate(chord_split):
+            # kontrola na velkéé písmeno
+            chordpart = chordpart[0].upper() + chordpart[1:]
+            if chordpart in InvChordTranslate:
+                chordpart = InvChordTranslate[chordpart]
+            # překlad akordů H, B a Gb
+            elif chordpart.startswith("B"):
+                chordpart = "Bb"+ chordpart[1:]
+            elif chordpart.startswith("H"):
+                chordpart = "B" + chordpart[1:]
+            elif chordpart.startswith("F#"):
+                chordpart = "Gb"+ chord[2:]
+            # endif
+            if chordpart.endswith("mi"):
+                chordpart = chordpart[:-1]
+            elif chordpart.endswith("mi7"):
+                chordpart = chordpart[:-2] + "7"
+            elif chordpart.endswith("7maj"):
+                chordpart = chordpart[:-4] + "maj7"
+            elif chordpart.endswith("4sus"):
+                chordpart = chordpart[:-4] + "sus4"
+            chord_split[idx] = chordpart
+        chord = "/".join(chord_split)
+        return cls(chord)
 
     def __hash__(self):
         return str(self).__hash__()
@@ -218,9 +249,13 @@ class Chord(PyChord):
         # extrní libka používá pro některé akordy cizí zápis a my je chceme 
         #   v nám známém českém
         if ret in ChordTranslate:
-            return ChordTranslate[ret]
-        elif ret[0] == "B" and (len(ret)<2 or ret[1] != 'b'):
-            return "H" + ret[1:]
+            ret = ChordTranslate[ret]
+        elif ret.startswith("Gb"):
+            return "F#" + ret[2:]
+        elif ret.startswith("Bb"):
+            ret = "B" + ret[2:]
+        elif ret.startswith("B"):
+            ret = "H" + ret[1:]
         return ret
     
     @property 
@@ -367,24 +402,7 @@ class Block:
                 print("!"*20, "Chyba zpracování multi-akordu ", origchord)
                 chord=chord[0]
                 self.origchord = origchord
-            chord_split = chord.split("/")
-            for idx, chordpart in enumerate(chord_split):
-                chordpart = chordpart[0].upper() + chordpart[1:]
-                # pychordpart neumí pracovat s H ale anglicky B
-                if chordpart.startswith("H"):
-                    chordpart = "B" + chordpart[1:]
-                # pychordpart neumí pracovat s Ami ale jen s Am
-                if chordpart.endswith("mi"):
-                    chordpart = chordpart[:-1]
-                elif chordpart.endswith("mi7"):
-                    chordpart = chordpart[:-2] + "7"
-                elif chordpart.endswith("7maj"):
-                    chordpart = chordpart[:-4] + "maj7"
-                elif chordpart.endswith("4sus"):
-                    chordpart = chordpart[:-4] + "sus4"
-                chord_split[idx] = chordpart
-            chord = "/".join(chord_split)
-            self.chord = Chord(chord)
+            self.chord = Chord.from_czech(chord)
             if transpose:
                 self.chord.transpose(transpose)
             self.chord_spaces = initial_chord_len - len(str(self.chord))

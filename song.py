@@ -201,6 +201,8 @@ ChordImageCache = {}
 
 ChordTranslate = {
     "Gbm": "F#m",
+    # "F#+": "F#aug",
+    "F#aug": "F#+",
     # ani je to zjednobušení ;) ale to je asi cajk
     "Ebm": "D#m",
 }

@@ -29,6 +29,7 @@ KnownChords = {
     "Fm7": Chord(positions='131111', fingers='131111'),
     "Fmaj7": Chord(positions='xx3210', fingers='--321-'),
     "F#": Chord(positions='133211', fingers='134211'),
+    "F#+": Chord(positions='xx4332', fingers='--4231'),
     "F#m": Chord(positions='244222', fingers='134111'),
     "F#7": Chord(positions='131211', fingers='131211'),
     "F#m7": Chord(positions='232222', fingers='131111'),

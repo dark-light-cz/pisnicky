@@ -11,6 +11,10 @@
     <label for="transpose">Zobrazit transponované o:</label> <input id="transpose" name="transpose" value="{{song.transpose}}" type="number" min='-10' max='10'><br>
     <label for="source">Zdroj:</label> <input id="source" name="source" value="{{song.source}}" readonly><br>
     <label for="extid">Externí id:</label> <input id="extid" name="extid" value="{{song.extid}}" readonly><br>
+    <label for="fontsize">Velikost fontu:</label> <input id="fontsize" name="fontsize" value="{{song.fontsize or ""}}" placeholder="auto"><br>
+    <label for="cols">Sloupce:</label><input id="cols" name="cols" value="{{song.cols or ""}}" placeholder="auto"><br>
+    <label for="chordsplace">Umístění akordů:</label><select input id="chordsplace" name="chordsplace">
+    {% for opt in ["default","bottom","right"]%} <option value="{{opt}}" {%if opt == song.chordsplace%}selected{%endif%}>{{opt}}</option>{%endfor%}</select><br>
     <textarea name="text" style="width:100%;height:500px">{{song.text}}</textarea><br>
     <input type="submit" value="Uložit" name="submit"><br>
 </form>

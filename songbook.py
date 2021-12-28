@@ -30,7 +30,10 @@ class SongBook:
                     bpm int,
                     source text,
                     extid text,
-                    transpose int not null default 0
+                    transpose int not null default 0,
+                    cols int,
+                    fontsize int,
+                    chordsplace varchar(20) not null default "default"
                 );
             """)
         self.conn.commit()
@@ -115,7 +118,7 @@ class SongBook:
         cols = {}
         for k in (
             "name", "authors", "text", "rythm", "capo", "bpm", "source", 
-            "extid", "transpose"
+            "extid", "transpose", "cols", "fontsize", "chordsplace"
         ):
             if k in kwargs:
                 if kwargs[k] == 'None':
@@ -137,7 +140,7 @@ class SongBook:
     def add_song(
         self, name, authors, text, 
         rythm=None, capo=0, bpm=None, source=None, extid=None, transpose=0,
-        cur=None
+        cur=None, cols=None, fontsize=None, chordsplace="default"
     ):
         commit = False
         if cur is None:
@@ -145,13 +148,19 @@ class SongBook:
             cur = self.conn.cursor()
 
         cur.execute("""insert into songs 
-                (name,authors,text,rythm,capo,bpm,source,extid,transpose)
-                values
-                (?   ,?      ,?   ,?    ,?   ,?  ,?     ,?    ,?)
+    (
+        name,authors,text,rythm,capo,bpm,source,extid,transpose,
+        cols,fontsize,chordsplace
+    )
+    values
+    (
+        ?   ,?      ,?   ,?    ,?   ,?  ,?     ,?    ,?        ,
+        ?   ,?       ,?
+    )
                 """, (
             name, authors, text, rythm, capo, bpm, source, extid, transpose,
-            )
-        )
+            cols, fontsize, chordsplace
+        ))
         lastrowid = cur.lastrowid
         
         if commit:

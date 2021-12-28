@@ -46,7 +46,10 @@ class Song(list):
         bpm=None,
         source=None,
         extid=None,
-        transpose=0
+        transpose=0,
+        cols=None,
+        fontsize=None,
+        chordsplace="default",
     ):
         self.song_id = song_id
         self.name  = name
@@ -60,6 +63,9 @@ class Song(list):
         self.used_chords = set()
         # use setter => parse
         self.text = text
+        self.cols = cols
+        self.fontsize = fontsize
+        self.chordsplace = chordsplace
 
     @property
     def text(self):

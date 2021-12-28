@@ -17,9 +17,6 @@
         .song-body {
             font-family: 'Courier New', monospace;
         }
-        .song-body-2col {
-            column-count: 2;
-        }
         .song-body.text-small0 {
             font-size: 100%;
         }
@@ -159,7 +156,7 @@
                         <div class="{{k}}">{{song[k]}}</div>
                     {% endif %}
                 {% endfor %}
-            </div>
+            </div> {# left #}
             <div class="right">
                 <div class="page_nr">Číslo:{{("% 4d"%loop.index)|replace(" ", '&nbsp;')}}</div>
                 {% for k in ["capo", "rythm"] %}
@@ -174,22 +171,41 @@
                         {% endif %}
                     {% endif %}
                 {% endfor %}
-            </div>
-        </div>
+            </div> {# right #}
+        </div>{# song header #}
         <hr>
         {% set songLines = song.lines %}
         {# <pre class="song-body">{{song.text}}</pre> #}
-        {% set textSmall = 0 %}
-        {% if song.width > 40 and songLines > 86 %}
-            {% set textSmall = 2 %}
-        {% elif song.width > 40 and songLines > 68 %}
-            {% set textSmall = 1 %}
+        {% set fontSize = song.fontsize %}
+        {% if not song.fontsize %}
+            {% set fontSize = 100 %}
+            {% if song.width > 40 and songLines > 86 %}
+                {% set fontSize = 60 %}
+            {% elif song.width > 40 and songLines > 68 %}
+                {% set fontSize = 80 %}
+            {%endif%}
         {%endif%}
-        {%if textSmall %}
+        {% if song.chordsplace == "right" %}
+            {% set chordsRight = True %}
+        {% elif not song.chordsplace or song.chordsplace == "default" %}
+            {% set chordsRight = fontSize <= 80 %}
+        {% else %}
+            {% set chordsRight = False %}
+        {%endif%}
+        
+        {%if chordsRight %}
             <div class="wrap-row clearfix">
             <div class="wrap-col">
         {%endif%}
-        <div class="song-body {% if song.width <= 40 %}song-body-2col{% endif %} text-small{{textSmall}} songLines{{songLines}}" >
+        {% set columns = song.cols %}
+        {% if not columns %}
+            {% if song.width <= 40 %}
+                {% set columns = 2 %}
+            {% else %}
+                {% set columns = 1 %}
+            {% endif %}
+        {% endif %}
+        <div class="song-body songLines{{songLines}}" style="{% if columns > 1 %}column-count: {{columns}};{% endif %} font-size:{{fontSize}}%">
           {%- for paragraph in song -%}
             <p class="{{paragraph.kind}}">
               {%- if paragraph.kind == 'chorus' -%}
@@ -245,8 +261,8 @@
               {%- endfor -%}
             </p>
           {%- endfor -%}
-        </div>
-        {%if textSmall %}
+        </div> {# song body #}
+        {%if chordsRight %}
             </div><!-- wrap-col-->
             <div class="wrap-col line{{
                 1 if song.used_chords|length <= 7 else (
@@ -255,7 +271,7 @@
             }}">
         {%endif%}
         <div class="chords-line">
-            {%if not textSmall %}
+            {%if not chordsRight %}
                 <hr>
             {%endif%}
             {% if song.used_chords %}
@@ -263,16 +279,16 @@
                     <div class="chord-img">{{chord}}:<br/>{{ chord.svg(width=87) }}</div>
                 {%- endfor -%}
             {%- endif -%}
-        </div>
-        {%if textSmall %}
+        </div> {# chords-line #}
+        {%if chordsRight %}
             </div><!-- wrap-col-->
             </div><!-- wrap-row-->
         {%endif%}
         <div class="song-footer">
             <hr>
             <hr>
-        </div>
-      </div>
+        </div> {# song footer #}
+      </div> {# song wrap #}
     {%- endfor -%}
     {%- if print_toc -%}
         <h2>Autoři:</h2>

@@ -16,7 +16,7 @@ DB = "./songs.sqlite3"
 
 song_cols = (
     "name", "authors", "text", "rythm", "capo", "bpm", "source", "extid",
-    "transpose"
+    "transpose", "cols", "fontsize", "chordsplace"
 )
 
 def render(template, data):

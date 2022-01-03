@@ -82,6 +82,22 @@ class PisnickyHandler(http.server.BaseHTTPRequestHandler):
             if 'id' in query_components:
                 song_id = [int(query_components["id"][0])]
             out = s.render(song_id, toc=not bool(song_id))
+        elif req.path == "/print.pdf":
+            # weasyprint neumí columns :-(
+            s = SongBook(DB)
+            song_id = None
+            query_components = parse_qs(req.query)
+            if 'id' in query_components:
+                song_id = [int(query_components["id"][0])]
+            out = s.render(song_id, toc=not bool(song_id))
+            from weasyprint import HTML
+            out = HTML(string=out).write_pdf()
+            self.send_response(200)
+            self.send_header("Content-type", "application/pdf")
+            self.end_headers()
+            print("!" * 30)
+            self.wfile.write(out)
+            return 
         elif req.path == "/":
             out = render("list.jinja", {})
         elif req.path == "/list":

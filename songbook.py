@@ -1,6 +1,7 @@
 import sqlite3
 from jinja2 import Environment, BaseLoader
 from song import Song
+from czech_sort import key as czkey
 
 
 class SongBook:
@@ -60,8 +61,10 @@ class SongBook:
         if cur is None:
             commit = True
             cur = self.conn.cursor()
-        cur.execute("select song_id, name, authors from songs order by name")
-        for i in cur:
+        cur.execute("select song_id, name, authors from songs")
+        songs = cur.fetchall()
+        songs.sort(key=lambda s: czkey(s["name"]))
+        for i in songs:
             yield i
         if commit:
             self.conn.commit()

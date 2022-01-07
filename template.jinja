@@ -46,13 +46,16 @@
             overflow:hidden;
         }
         .wrap-col.line1 .chords-line{
-            width:15%;
+            width:90px
         }
         .wrap-col.line2 .chords-line{
-            width:30%;
+            width:180px;
         }
         .wrap-col.line3 .chords-line{
-            width:45%;
+            width:270px;
+        }
+        .wrap-col.line3 .chords-line{
+            width:360px;
         }
         @media print {
             .song-footer{
@@ -265,9 +268,7 @@
         {%if chordsRight %}
             </div><!-- wrap-col-->
             <div class="wrap-col line{{
-                1 if song.used_chords|length <= 7 else (
-                    2 if song.used_chords|length <= 14 else 3
-                )
+                (song.used_chords|length/11)|int + 1
             }}">
         {%endif%}
         <div class="chords-line">

@@ -130,7 +130,11 @@ class Song(list):
                     print(f"Neznámý akord : {part}")
                     songparts.append(Block(text="[" + part + "]"))
                 else:
-                    self.used_chords.add(songparts[-1].chord)
+                    chord = songparts[-1].chord
+                    if chord.is_multi():
+                        self.used_chords.update(chord.decompose())
+                    else:
+                        self.used_chords.add(chord)
                 part = ""
                 chord = False
             elif not chord and char == '[':
@@ -229,7 +233,7 @@ class ImageChord:
             return False
         return True
         # return str(self) in KnownChords
-
+    
     def svg(self, width=None, height=None):
         c = KnownChords.get(str(self))
         if not c:
@@ -270,6 +274,9 @@ class ImageChord:
 
 
 class Chord(ImageChord, PyChord):
+    
+    def is_multi(self):
+        return False
 
     @classmethod
     def from_czech(cls, chord):
@@ -299,6 +306,15 @@ class Chord(ImageChord, PyChord):
         chord = "/".join(chord_split)
         return cls(chord)
 
+    def decompose(self):
+        if not self.is_multi():
+            raise RuntimeError("Nelze dekomponovat multiakord")
+        else:
+            return [
+                self.from_czech(i)
+                for i in str(self).split("/")
+            ]
+
     def __hash__(self):
         return str(self).__hash__()
 
@@ -316,10 +332,56 @@ class Chord(ImageChord, PyChord):
             ret = "H" + ret[1:]
         return ret
     
+def get_chord(chord, transpose=0):
+    if "/" in chord:
+        ret = MultiChord(chord)
+    else:
+        try:
+            ret = Chord.from_czech(chord)
+        except ValueError as e:
+            print("Unknown chord", chord, "-" , e)
+            if transpose:
+                raise
+            ret = FakeChord(chord)
+    if transpose:
+        ret.transpose(transpose)
+    return ret
+
+class MultiChord(object):
+    def __init__(self, chord, split="/"):
+        if isinstance(chord, str):
+            chord = chord.split(split)
+        self.chords = []
+        self._split = split
+        for part in chord:
+            part = part.strip()
+            if part:
+                self.chords.append(
+                    get_chord(part)
+                )
+    
+    def is_multi(self):
+        return True
+
+    def decompose(self):
+        return self.chords[:]
+    
+    def __str__(self):
+        return self._split.join(str(i) for i in self.chords)
+
+    def transpose(self, i):
+        for one in self.chords:
+            one.transpose(i)
+
+
 
 class FakeChord(ImageChord, str):
-    pass
 
+    def is_multi(self):
+        return False
+
+    def transpose(self, i):
+        raise RuntimeError("Fake Chord nelze transponovat")
 
 class Line(list):
     @property
@@ -398,17 +460,20 @@ class Block:
             origchord = chord
             initial_chord_len = len(chord) 
             chord = chord.strip()
+            split=None
             if "," in chord:
-                chord = chord.split(',')
-            if ' ' in chord:
-                chord = chord.split(' ')
-            if "(" in chord:
+                chord = [i.strip() for i in chord.split(',')]
+                split = ","
+            elif ' ' in chord:
+                chord = [i for i in chord.split(' ') if i]
+            elif "(" in chord:
                 chord = [
                         j.strip()
                         for i in chord.split("(")
                         for j in i.split(")")
                         if j.strip()
                     ]
+                split = "("
             # TODO tady je potřeba udělat multiakord podle toho co to je 
             #   začít to zpracovávat
             #   1) "C(D)" - při opakování refrénu se hraje jiná tónina ...
@@ -416,19 +481,14 @@ class Block:
             #   3) "Dmi, Ami, ..." na konco sloky je to vlastně mezihra nebo 
             #       vyhrávka na konci
             if isinstance(chord, list):
-                print("!"*20, "Chyba zpracování multi-akordu ", origchord)
-                chord=chord[0]
-                self.origchord = origchord
-            try:
-                self.chord = Chord.from_czech(chord)
-            except ValueError as e:
-                print("Unknown chord", chord, "-" , e)
-                if transpose:
-                    raise
-                self.chord = FakeChord(chord)
+                if len(chord) == 1:
+                    chord=chord[0]
+                else:
+                    self.chord = MultiChord(chord, split)
+                    if transpose:
+                        self.chord.transpose()
             else:
-                if transpose:
-                    self.chord.transpose(transpose)
+                self.chord = get_chord(chord, transpose)
             self.chord_spaces = initial_chord_len - len(str(self.chord))
         # endif
         if text and all(i == " " for i in text):

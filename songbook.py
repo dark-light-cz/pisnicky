@@ -228,7 +228,10 @@ class SongBook:
         cur.execute(qry, q_args)
         try: 
             return tpl.render(
-                songs=(Song(**i) for i in cur),
+                songs=sorted(
+                    (Song(**i) for i in cur),
+                    key=lambda s: czkey(s.name)
+                ),
                 print_toc=toc,
                 czech_sort=czech_sort,
             )

@@ -4,6 +4,10 @@ from song import Song
 from czech_sort import key as czkey
 
 
+def czech_sort(arr, attr):
+    return sorted(arr, key=lambda s: czkey(s[attr]))
+
+
 class SongBook:
     def __init__(self, dbname):
         self.conn = sqlite3.connect(dbname)
@@ -225,7 +229,8 @@ class SongBook:
         try: 
             return tpl.render(
                 songs=(Song(**i) for i in cur),
-                print_toc=toc
+                print_toc=toc,
+                czech_sort=czech_sort,
             )
         finally:
             if commit:

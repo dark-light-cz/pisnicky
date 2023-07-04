@@ -9,6 +9,7 @@ from time import sleep
 from jinja2 import Environment, FileSystemLoader
 from jinja2.environment import TemplateStream
 import types
+from czech_sort import key as czkey
 
 PORT = 8000
 
@@ -19,9 +20,14 @@ song_cols = (
     "transpose", "cols", "fontsize", "chordsplace"
 )
 
+def czech_sort(arr, attr):
+    return sorted(arr, key=lambda s: czkey(s[attr]))
+
+
 def render(template, data):
     env = Environment(loader=FileSystemLoader('./template'))
     tpl = env.get_template(template)
+    data["czech_sort"] = czech_sort
     return tpl.stream(**data)
 
 

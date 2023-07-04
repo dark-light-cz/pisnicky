@@ -294,7 +294,7 @@
     {%- if print_toc -%}
         <h2>Autoři:</h2>
         <ul class="toc">
-        {% for row in toc_a|sort %}
+        {% for row in czech_sort(toc_a, 0) %}
             <li class="clearfix">
             <span class="toc-authors-songname">{{row[2]}}</span>
             <span class="toc-left">{{row.0}}{%if row[1]%}, {{row[1]}}{%endif%}</span>
@@ -305,7 +305,7 @@
         <div class="song-footer"></div>
         <h2>Písně:</h2>
         <ul class="toc">
-        {% for row in toc_n|sort %}
+        {% for row in czech_sort(toc_n, 0) %}
             <li class="clearfix">
             <span class="toc-authors-songname">{{row[1]}}</span>
             <span class="toc-left">{{row.0}}</span>
